@@ -26,9 +26,20 @@ def save_user_data(username, data):
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
-        if username:
-            request.session['username'] = username
-            return redirect('dashboard')
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            # TODO: change 'dashboard' to whatever your main page is
+            return redirect("dashboard")
+        else:
+            # re-render the page with an error message
+            context = {"error": "Invalid username or password."}
+            return render(request, "login.html", context)
+
+    # GET request → just show the page
     return render(request, "login.html")
 
 
@@ -206,3 +217,11 @@ def delete_income(request, income_id):
     save_user_data(username, user_data)
 
     return redirect('view_income')
+
+# -------------------------------------------
+# LOGOUT
+# -------------------------------------------
+def logout_view(request):
+    # Remove username from session and clear all session data
+    request.session.flush()
+    return redirect("login")
