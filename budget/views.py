@@ -97,10 +97,39 @@ def add_expense_view(request):
     if not username:
         return redirect('login')
 
+    error_message = None
+    category_value = ""
+    amount_value = ""
+
     if request.method == "POST":
         category = request.POST.get("category")
         amount = request.POST.get("amount")
+
+        # Keep values to refill the form
+        category_value = category
+        amount_value = amount
+
         if category and amount:
+            try:
+                amount_float = float(amount)
+                total_income = sum(i.amount for i in Income.objects.all())
+                total_expense = sum(e.amount for e in Expense.objects.all())
+
+                if total_expense + amount_float > total_income:
+                    error_message = "Error: Expense exceeds your available budget!"
+                else:
+                    Expense.objects.create(category=category, amount=amount_float)
+                    return redirect('dashboard')
+            except ValueError:
+                error_message = "Invalid amount entered."
+
+    context = {
+        "username": username,
+        "error_message": error_message,
+        "category_value": category_value,
+        "amount_value": amount_value,
+    }
+    return render(request, "add_expense.html", context)
             user_data = load_user_data(username)
             expense_item = {"category": category, "amount": float(amount)}
             user_data["expenses"].append(expense_item)
@@ -109,7 +138,7 @@ def add_expense_view(request):
             save_user_data(username, user_data)
             return redirect('dashboard')
 
-    return render(request, "add_expense.html", {"username": username})
+
 
 
 # -------------------------------------------
