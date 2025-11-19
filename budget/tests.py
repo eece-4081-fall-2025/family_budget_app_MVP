@@ -1,35 +1,97 @@
+"""
+Tests for the budget app.
 
-from django.test import TestCase
+Sections:
+1) Expense model & basic API tests (Epic 3 + MVP)
+2) Epic 5 – Budget summaries & reports (stories 23–28)
+3) Epic 1 – User Accounts & Profile Management
+4) Epic 2 – Income Management / per-user JSON data
+"""
+
+from decimal import Decimal
+from datetime import date
+import os
+import json
+
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from .models import Expense
-from datetime import date
+
+from .models import Expense, Budget, Category, Transaction
+
+
+# ============================================================
+# 1) Expense model & basic API tests
+# ============================================================
+
+
+class Epic3ExpenseManagementTest(TestCase):
+    """
+    Basic model-level tests from Epic 3 to ensure we can create
+    expenses with categories, amounts, and notes.
+    """
+
+    def test_add_expense_with_category_and_amount(self):
+        """User can add an expense with category and amount."""
+        expense = Expense.objects.create(
+            category="Food",
+            amount=Decimal("50.00"),
+        )
+        self.assertEqual(expense.category, "Food")
+        self.assertEqual(expense.amount, Decimal("50.00"))
+
+    def test_add_expense_with_notes(self):
+        """User can add notes to an expense."""
+        expense = Expense.objects.create(
+            category="Entertainment",
+            amount=Decimal("20.00"),
+        )
+        # Our model uses `note` (singular), not `notes`
+        expense.note = "Movie ticket"
+        expense.save()
+        self.assertEqual(expense.note, "Movie ticket")
+
+    def test_multiple_expenses(self):
+        """User can add multiple expenses."""
+        Expense.objects.create(category="Rent", amount=Decimal("500.00"))
+        Expense.objects.create(category="Food", amount=Decimal("100.00"))
+        all_expenses = Expense.objects.all()
+        self.assertEqual(all_expenses.count(), 2)
+
 
 class ExpenseModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="pass123")
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="pass123",
+        )
 
     def test_create_expense_model_fields(self):
         """Expense model should correctly save basic fields."""
         exp = Expense.objects.create(
             user=self.user,
-            amount=100.50,
+            amount=Decimal("100.50"),
             category="Food",
             note="Groceries",
             date=date.today(),
-            recurring=False
+            recurring=False,
         )
-        self.assertEqual(exp.amount, 100.50)
+        self.assertEqual(exp.amount, Decimal("100.50"))
         self.assertEqual(exp.category, "Food")
         self.assertFalse(exp.recurring)
 
+
 class ExpenseAPITests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="apitester", password="pass123")
+        self.user = User.objects.create_user(
+            username="apitester",
+            password="pass123",
+        )
         self.client.login(username="apitester", password="pass123")
         self.create_url = reverse("create_expense")
 
     def test_post_valid_expense_creates_record(self):
+        """Posting valid data should create an expense and return 201."""
         data = {"amount": 25, "category": "Transport", "note": "Bus fare"}
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, 201)
@@ -37,24 +99,36 @@ class ExpenseAPITests(TestCase):
         self.assertEqual(Expense.objects.first().category, "Transport")
 
     def test_post_invalid_expense_fails(self):
-        data = {"amount": -10, "category": ""}
+        """Invalid data should not create an expense and should return 400."""
+        data = {"amount": -10, "category": ""}  # negative + missing category
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, 400)
 
+
 class ExpenseListTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="listuser", password="pass123")
+        self.user = User.objects.create_user(
+            username="listuser",
+            password="pass123",
+        )
         self.client.login(username="listuser", password="pass123")
         self.list_url = reverse("list_expenses")
 
     def test_get_monthly_expenses_returns_correct_records(self):
         """Should return expenses only for the selected month."""
         Expense.objects.create(
-            user=self.user, amount=50, category="Food", date=date(2025, 10, 1)
+            user=self.user,
+            amount=Decimal("50.00"),
+            category="Food",
+            date=date(2025, 10, 1),
         )
         Expense.objects.create(
-            user=self.user, amount=100, category="Transport", date=date(2025, 9, 30)
+            user=self.user,
+            amount=Decimal("100.00"),
+            category="Transport",
+            date=date(2025, 9, 30),
         )
+
         response = self.client.get(self.list_url, {"month": "2025-10"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -66,3 +140,219 @@ class ExpenseListTests(TestCase):
         self.client.logout()
         response = self.client.get(self.list_url, {"month": "2025-10"})
         self.assertEqual(response.status_code, 403)
+
+
+# ============================================================
+# 2) Epic 5 – Budget summaries & reports (stories 23–28)
+# ============================================================
+
+
+class Epic5Base(TestCase):
+    """
+    Base fixture for Epic 5 tests.
+
+    Creates:
+      - a user
+      - a budget
+      - three categories (Food, Rent, Misc)
+      - one income transaction + two expense transactions, all in Feb 2026
+    """
+
+    def setUp(self):
+        # user + budget
+        self.user = User.objects.create_user(
+            username="derrick",
+            password="pass123",
+        )
+        self.budget = Budget.objects.create(user=self.user, name="Spring Budget")
+
+        # categories
+        self.food = Category.objects.create(budget=self.budget, name="Food")
+        self.rent = Category.objects.create(budget=self.budget, name="Rent")
+        self.misc = Category.objects.create(budget=self.budget, name="Misc")
+
+        # same month for all transactions: 2026-02
+        d1 = date(2026, 2, 5)
+        d2 = date(2026, 2, 10)
+        d3 = date(2026, 2, 15)
+
+        # income + expenses (positive = income, negative = expense)
+        Transaction.objects.create(
+            budget=self.budget,
+            category=self.misc,
+            date=d1,
+            description="Paycheck",
+            amount=Decimal("2000.00"),
+        )
+        Transaction.objects.create(
+            budget=self.budget,
+            category=self.rent,
+            date=d2,
+            description="Rent",
+            amount=Decimal("-900.00"),
+        )
+        Transaction.objects.create(
+            budget=self.budget,
+            category=self.food,
+            date=d3,
+            description="Groceries",
+            amount=Decimal("-250.00"),
+        )
+
+
+class MonthlySummaryTests(Epic5Base):
+    """
+    Covers user stories:
+      23 – breakdown of monthly expenditure by category
+      24 – see total income over total expenses
+    """
+
+    def test_monthly_kpis_for_budget(self):
+        from budget.reporting import monthly_kpis
+
+        kpi = monthly_kpis(self.budget.id, year=2026, month=2)
+
+        self.assertEqual(kpi["income"], Decimal("2000.00"))
+        # expenses stored negative internally
+        self.assertEqual(kpi["expense"], Decimal("-1150.00"))
+        self.assertEqual(kpi["net"], Decimal("850.00"))
+
+    def test_monthly_expense_breakdown_by_category(self):
+        from budget.reporting import monthly_by_category
+
+        rows = monthly_by_category(self.budget.id, year=2026, month=2)
+
+        # expect Food 250, Rent 900 (absolute values for charts)
+        summary = {r["category"]: r["total"] for r in rows}
+        self.assertEqual(summary["Food"], Decimal("250.00"))
+        self.assertEqual(summary["Rent"], Decimal("900.00"))
+
+
+class ExportCsvTests(Epic5Base):
+    """
+    Covers user story 26 – export data in CSV format.
+    """
+
+    def test_export_csv_downloads_file(self):
+        self.client.login(username="derrick", password="pass123")
+        url = reverse("reports_csv", args=[self.budget.id])
+        resp = self.client.get(url)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "text/csv")
+
+        content = resp.content.decode()
+        # contains key lines
+        self.assertIn("Income", content)
+        self.assertIn("Expense", content)
+        self.assertIn("Food", content)
+        self.assertIn("Rent", content)
+
+
+class RecommendationsTests(Epic5Base):
+    """
+    Covers user story 27 – intelligent recommendations to balance overspending.
+    """
+
+    def test_recommendations_focus_on_highest_expense_categories(self):
+        from budget.reporting import recommendations
+
+        recs = recommendations(self.budget.id, top_n=1)
+        self.assertEqual(len(recs), 1)
+        # Rent is largest expense (900 > 250)
+        self.assertEqual(recs[0]["category"], "Rent")
+        self.assertIn("Reduce Rent", recs[0]["suggestion"])
+
+
+class WhatIfSimulationTests(Epic5Base):
+    """
+    Covers user story 28 – what-if simulations.
+    """
+
+    def test_what_if_endpoint_returns_projected_net(self):
+        self.client.login(username="derrick", password="pass123")
+        url = reverse("reports_what_if", args=[self.budget.id])
+
+        # Plan: reduce Food by 50, increase income by 100
+        payload = {
+            "changes": [
+                {"category": "Food", "delta": -50},
+                {"category": "Side Income", "delta": 100},
+            ]
+        }
+        resp = self.client.post(url, data=payload, content_type="application/json")
+        self.assertEqual(resp.status_code, 200)
+
+        data = resp.json()
+        # base net is 850 (from MonthlySummaryTests)
+        self.assertEqual(Decimal(str(data["base"]["net"])), Decimal("850.00"))
+        self.assertEqual(Decimal(str(data["delta"])), Decimal("50"))  # -50 + 100
+        self.assertEqual(Decimal(str(data["projected_net"])), Decimal("900.00"))
+
+
+# ============================================================
+# 3) Epic 1 – User Accounts & Profile Management
+# ============================================================
+
+
+class UserAccountTest(TestCase):
+    def test_user_can_register_and_login(self):
+        # Create a test user
+        user = User.objects.create_user(username="family_user", password="test1234")
+
+        # Verify the user was created
+        self.assertEqual(user.username, "family_user")
+        self.assertTrue(user.check_password("test1234"))
+
+        # Try logging in through Django's test client
+        login_successful = self.client.login(
+            username="family_user", password="test1234"
+        )
+        self.assertTrue(login_successful)
+
+
+# ============================================================
+# 4) Epic 2 – Income Management (Aryan)
+# Per-user JSON data storage test
+# ============================================================
+
+
+class UserDataStorageTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def tearDown(self):
+        # Clean up JSON files created by tests
+        for file in os.listdir("."):
+            if file.endswith("_data.json"):
+                os.remove(file)
+
+    def _login(self, username):
+        # Simulate login
+        resp = self.client.post(reverse("login"), {"username": username})
+        self.assertEqual(resp.status_code, 302)
+
+    def _read_json(self, filename):
+        with open(filename, "r") as f:
+            return json.load(f)
+
+    def test_data_is_separate_per_user(self):
+        # First user
+        self._login("Aryan")
+        self.client.post(
+            reverse("add_income"), {"source": "Job", "amount": "100"}
+        )
+        aryan_data = self._read_json("Aryan_data.json")
+        self.assertEqual(aryan_data["total_income"], 100)
+
+        # Second user
+        self._login("Jamie")
+        self.client.post(
+            reverse("add_income"), {"source": "Gift", "amount": "200"}
+        )
+        jamie_data = self._read_json("Jamie_data.json")
+        self.assertEqual(jamie_data["total_income"], 200)
+
+        # Aryan's income should remain unchanged
+        aryan_data = self._read_json("Aryan_data.json")
+        self.assertEqual(aryan_data["total_income"], 100)
