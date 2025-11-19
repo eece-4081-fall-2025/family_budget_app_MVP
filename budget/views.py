@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
 from .models import Income, Expense
 import json
 import os
@@ -117,14 +118,31 @@ def save_user_data(username, data):
 
 
 # -------------------------------------------
-# LOGIN
+# LOGIN (supports both auth + simple session)
 # -------------------------------------------
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
-        if username:
+        password = request.POST.get("password", "")
+
+        # If password is provided, use Django auth
+        if username and password:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                # also keep username in session for JSON-based flows
+                request.session["username"] = username
+                return redirect("dashboard")
+            else:
+                context = {"error": "Invalid username or password."}
+                return render(request, "login.html", context)
+
+        # Fallback: original MVP behavior (no password, just set session)
+        if username and not password:
             request.session["username"] = username
             return redirect("dashboard")
+
+    # GET request or missing username → just render the page
     return render(request, "login.html")
 
 
@@ -348,3 +366,15 @@ def delete_income(request, income_id):
     save_user_data(username, user_data)
 
     return redirect("view_income")
+
+
+# -------------------------------------------
+# LOGOUT
+# -------------------------------------------
+def logout_view(request):
+    """
+    Logs out a Django-authenticated user and clears session data.
+    """
+    logout(request)
+    request.session.flush()
+    return redirect("login")

@@ -1,0 +1,1 @@
+{"income": [{"id": 1, "source": "hojj", "amount": 200.0, "contributor": "", "planned": false, "date": "2025-11-15"}], "expenses": [{"category": "88", "amount": 100.0}, {"category": "hojj", "amount": 300.0}], "total_income": 200.0, "total_expense": 400.0, "balance": -200.0}
