@@ -1,63 +1,62 @@
-
-
-
 """
 Tests for the budget app.
 
 Sections:
-1) Expense model & basic API tests
+1) Expense model & basic API tests (Epic 3 + MVP)
 2) Epic 5 – Budget summaries & reports (stories 23–28)
 3) Epic 1 – User Accounts & Profile Management
+4) Epic 2 – Income Management / per-user JSON data
 """
 
 from decimal import Decimal
 from datetime import date
-
-from django.urls import reverse
-import os, json
-
-from .models import Expense, Budget, Category, Transaction
-
+import os
+import json
 
 from django.test import TestCase, Client
+from django.urls import reverse
 from django.contrib.auth.models import User
 
-
-
-
-class Epic3ExpenseManagementTest(TestCase):
-    def test_add_expense_with_category_and_amount(self):
-        """User can add an expense with category and amount"""
-        expense = Expense.objects.create(
-            category='Food',
-            amount=50
-        )
-        self.assertEqual(expense.category, 'Food')
-        self.assertEqual(expense.amount, 50)
-
-    def test_add_expense_with_notes(self):
-        """User can add notes to an expense"""
-        expense = Expense.objects.create(
-            category='Entertainment',
-            amount=20
-        )
-        # Add notes dynamically (simulate adding notes field if you implement later)
-        expense.notes = "Movie ticket"
-        expense.save()
-        self.assertEqual(expense.notes, "Movie ticket")
-
-    def test_multiple_expenses(self):
-        """User can add multiple expenses"""
-        Expense.objects.create(category='Rent', amount=500)
-        Expense.objects.create(category='Food', amount=100)
-        all_expenses = Expense.objects.all()
-        self.assertEqual(all_expenses.count(), 2)
-=======
+from .models import Expense, Budget, Category, Transaction
 
 
 # ============================================================
 # 1) Expense model & basic API tests
 # ============================================================
+
+
+class Epic3ExpenseManagementTest(TestCase):
+    """
+    Basic model-level tests from Epic 3 to ensure we can create
+    expenses with categories, amounts, and notes.
+    """
+
+    def test_add_expense_with_category_and_amount(self):
+        """User can add an expense with category and amount."""
+        expense = Expense.objects.create(
+            category="Food",
+            amount=Decimal("50.00"),
+        )
+        self.assertEqual(expense.category, "Food")
+        self.assertEqual(expense.amount, Decimal("50.00"))
+
+    def test_add_expense_with_notes(self):
+        """User can add notes to an expense."""
+        expense = Expense.objects.create(
+            category="Entertainment",
+            amount=Decimal("20.00"),
+        )
+        # Our model uses `note` (singular), not `notes`
+        expense.note = "Movie ticket"
+        expense.save()
+        self.assertEqual(expense.note, "Movie ticket")
+
+    def test_multiple_expenses(self):
+        """User can add multiple expenses."""
+        Expense.objects.create(category="Rent", amount=Decimal("500.00"))
+        Expense.objects.create(category="Food", amount=Decimal("100.00"))
+        all_expenses = Expense.objects.all()
+        self.assertEqual(all_expenses.count(), 2)
 
 
 class ExpenseModelTests(TestCase):
@@ -71,13 +70,13 @@ class ExpenseModelTests(TestCase):
         """Expense model should correctly save basic fields."""
         exp = Expense.objects.create(
             user=self.user,
-            amount=100.50,
+            amount=Decimal("100.50"),
             category="Food",
             note="Groceries",
             date=date.today(),
             recurring=False,
         )
-        self.assertEqual(exp.amount, 100.50)
+        self.assertEqual(exp.amount, Decimal("100.50"))
         self.assertEqual(exp.category, "Food")
         self.assertFalse(exp.recurring)
 
@@ -119,13 +118,13 @@ class ExpenseListTests(TestCase):
         """Should return expenses only for the selected month."""
         Expense.objects.create(
             user=self.user,
-            amount=50,
+            amount=Decimal("50.00"),
             category="Food",
             date=date(2025, 10, 1),
         )
         Expense.objects.create(
             user=self.user,
-            amount=100,
+            amount=Decimal("100.00"),
             category="Transport",
             date=date(2025, 9, 30),
         )
@@ -289,19 +288,13 @@ class WhatIfSimulationTests(Epic5Base):
         self.assertEqual(Decimal(str(data["base"]["net"])), Decimal("850.00"))
         self.assertEqual(Decimal(str(data["delta"])), Decimal("50"))  # -50 + 100
         self.assertEqual(Decimal(str(data["projected_net"])), Decimal("900.00"))
+
+
 # ============================================================
 # 3) Epic 1 – User Accounts & Profile Management
 # ============================================================
 
 
-# Test written by Kanyinsola (Epic 1: User Accounts & Profile Management)
-
-
-
-
-# ============================================================
-# Epic 1 — User Accounts & Profile Management (Kanyinsola)
-# ============================================================
 class UserAccountTest(TestCase):
     def test_user_can_register_and_login(self):
         # Create a test user
@@ -312,22 +305,26 @@ class UserAccountTest(TestCase):
         self.assertTrue(user.check_password("test1234"))
 
         # Try logging in through Django's test client
-        login_successful = self.client.login(username="family_user", password="test1234")
+        login_successful = self.client.login(
+            username="family_user", password="test1234"
+        )
         self.assertTrue(login_successful)
 
 
 # ============================================================
-# Epic 2 — Income Management (Aryan)
+# 4) Epic 2 – Income Management (Aryan)
 # Per-user JSON data storage test
 # ============================================================
+
+
 class UserDataStorageTest(TestCase):
     def setUp(self):
         self.client = Client()
 
     def tearDown(self):
         # Clean up JSON files created by tests
-        for file in os.listdir('.'):
-            if file.endswith('_data.json'):
+        for file in os.listdir("."):
+            if file.endswith("_data.json"):
                 os.remove(file)
 
     def _login(self, username):
@@ -342,17 +339,20 @@ class UserDataStorageTest(TestCase):
     def test_data_is_separate_per_user(self):
         # First user
         self._login("Aryan")
-        self.client.post(reverse("add_income"), {"source": "Job", "amount": "100"})
+        self.client.post(
+            reverse("add_income"), {"source": "Job", "amount": "100"}
+        )
         aryan_data = self._read_json("Aryan_data.json")
         self.assertEqual(aryan_data["total_income"], 100)
 
         # Second user
         self._login("Jamie")
-        self.client.post(reverse("add_income"), {"source": "Gift", "amount": "200"})
+        self.client.post(
+            reverse("add_income"), {"source": "Gift", "amount": "200"}
+        )
         jamie_data = self._read_json("Jamie_data.json")
         self.assertEqual(jamie_data["total_income"], 200)
 
         # Aryan's income should remain unchanged
         aryan_data = self._read_json("Aryan_data.json")
         self.assertEqual(aryan_data["total_income"], 100)
-
