@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 # Existing Models (Income / Expense)
 # ============================================================
 
+
 class Income(models.Model):
     source = models.CharField(max_length=100)
     amount = models.FloatField()
@@ -37,7 +38,7 @@ class Expense(models.Model):
     category = models.CharField(max_length=100)
 
     # from MVP: CharField; from Epic 3: TextField
-    # choose TextField (more flexible); CharField code still works with it
+    # choose TextField (more flexible); CharField usage still works with it
     note = models.TextField(blank=True)
 
     # from Epic 3: auto_now_add; from MVP: default=timezone.now
@@ -61,6 +62,7 @@ class Expense(models.Model):
 # ============================================================
 # Epic 5 Models (Budget / Category / Transaction)
 # ============================================================
+
 
 class Budget(models.Model):
     """

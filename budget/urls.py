@@ -22,11 +22,9 @@ urlpatterns = [
     path('income/delete/<int:income_id>/', views.delete_income, name='delete_income'),
 
     # ---------------------------------------------------------
-    # Expense form/page routes (Epic 3 views)
+    # Expense form/page routes (MVP UI)
     # ---------------------------------------------------------
-    # These use different route *names* so they don't conflict with the API
-    path('expenses/', views.create_expense, name='create_expense_page'),
-    path('expenses/list/', views.list_expenses, name='list_expenses_page'),
+    path('expense/', views.add_expense_view, name='add_expense'),
 
     # ---------------------------------------------------------
     # Summary page
@@ -53,7 +51,7 @@ urlpatterns = [
     ),
 
     # ---------------------------------------------------------
-    # Expense API endpoints used by tests (keep these names!)
+    # Expense API endpoints used by tests (Epic 3)
     # ---------------------------------------------------------
     path(
         'api/expenses/create/',
