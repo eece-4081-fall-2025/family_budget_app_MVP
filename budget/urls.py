@@ -59,4 +59,7 @@ urlpatterns = [
         views_api.list_expenses,
         name='list_expenses'
     ),
+
+    # Logout
+    path('logout/', views.logout_view, name='logout'),
 ]

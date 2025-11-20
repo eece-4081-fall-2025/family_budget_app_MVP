@@ -359,35 +359,55 @@
             </div>
             <div class="helper-text mb-3">Step 1 of 3 · Create or join a family space</div>
 
-            <form method="POST">
+            <form method="POST" action="{% url 'login' %}">
               {% csrf_token %}
+            
+              {% if error %}
+                <div class="alert alert-danger py-2 px-3 mb-3" style="border-radius: 10px;">
+                  {{ error }}
+                </div>
+              {% endif %}
+            
               <div class="mb-3 text-start">
                 <label class="form-label fw-medium">
-                  Family or user name
+                  Username
                 </label>
                 <input
                   type="text"
                   name="username"
                   id="username-input"
                   class="form-control"
-                  placeholder="e.g., The Smith Family"
+                  placeholder="e.g., smith_parent01"
                   required
                 >
                 <small class="helper-text">
-                  You can use a shared family name, or just your own.
+                  This is the username you used when creating your account.
                 </small>
               </div>
-
+            
+              <div class="mb-3 text-start">
+                <label class="form-label fw-medium">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  class="form-control"
+                  placeholder="Enter your password"
+                  required
+                >
+              </div>
+            
               <button type="submit" class="btn btn-primary w-100 py-2 mb-2">
                 Continue
               </button>
-
+            
               <div class="divider">
                 <div class="divider-line"></div>
                 <div class="divider-text">or</div>
                 <div class="divider-line"></div>
               </div>
-
+            
               <button type="button" id="demo-btn" class="btn btn-light w-100 py-2"
                       style="border-radius:10px; border:1px solid #e5e7eb;">
                 👀 Try with a demo family
