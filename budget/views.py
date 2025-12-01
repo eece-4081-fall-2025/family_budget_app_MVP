@@ -5,7 +5,16 @@ import os
 
 # Helper functions to handle per-user data
 def get_user_file(username):
-    return f"{username}_data.json"
+    app_dir = os.path.dirname(__file__)
+
+    # user_data folder inside the app
+    folder = os.path.join(app_dir, "user_data")
+
+    # Ensure the folder exists
+    os.makedirs(folder, exist_ok=True)
+
+    # Return full path to this user's JSON file
+    return os.path.join(folder, f"{username}_data.json")
 
 def load_user_data(username):
     filename = get_user_file(username)
