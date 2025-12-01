@@ -1,38 +1,379 @@
 {% load static %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Income Records | Family Budgeting Tool</title>
 
-<div class="container mt-5">
-    <h3 class="mb-4">Income Records</h3>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Source</th>
-                <th>Amount</th>
-                <th>Contributor</th>
-                <th>Date</th>
-                <th>Planned?</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+    <style>
+        :root {
+            --bg: #e5f0ff;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-alt: #4f46e5;
+            --danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #6b7280;
+            --radius-lg: 24px;
+            --radius-pill: 999px;
+            --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
+        }
 
-        <tbody>
-        {% for inc in incomes %}
-            <tr>
-                <td>{{ inc.source }}</td>
-                <td>${{ inc.amount }}</td>
-                <td>{{ inc.contributor }}</td>
-                <td>{{ inc.date }}</td>
-                <td>{% if inc.planned %}Yes{% else %}No{% endif %}</td>
-                <td>
-                    <a href="{% url 'edit_income' inc.id %}" class="btn btn-primary btn-sm">Edit</a>
-                    <a href="{% url 'delete_income' inc.id %}" class="btn btn-danger btn-sm">Delete</a>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        * { box-sizing: border-box; }
 
-    <a href="{% url 'add_income' %}" class="btn btn-success">Add Income</a>
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back</a>
+        body {
+            margin: 0;
+            font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #f7fbff, var(--bg));
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== NAV ===== */
+        .nav {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.75rem;
+            background: #fafafa;
+            border-bottom: 1px solid #e6e6e6;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .logo-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #facc15, #fb923c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .app-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-username {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-right: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.45rem 1.15rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            transition: 0.12s ease;
+        }
+
+        .btn-outline {
+            background: #ffffff;
+            color: var(--text-main);
+            border-color: #e5e7eb;
+        }
+
+        .btn-outline:hover {
+            background: #e0ecff;
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-alt));
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+        }
+
+        .btn-secondary-accent {
+            background: #4f46e5;
+            color: #ffffff;
+        }
+
+        .btn-secondary-accent:hover {
+            background: #4338ca;
+        }
+
+        .btn-outline-danger {
+            background: #111827;
+            color: #f9fafb;
+            border-color: #111827;
+        }
+
+        .btn-outline-danger:hover {
+            background: #020617;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2.5rem 1rem 3rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 1120px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 1.7rem 1.9rem 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-size: 1.35rem;
+        }
+
+        .card-header p {
+            margin: 0.2rem 0 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .actions-header {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-card {
+            padding: 0.5rem 1.2rem;
+            border-radius: var(--radius-pill);
+            background: linear-gradient(135deg, var(--primary), var(--primary-alt));
+            color: #ffffff;
+            text-decoration: none;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+        }
+
+        .btn-primary-card:hover {
+            transform: translateY(-1px);
+        }
+
+        /* TABLE */
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: #f3f4ff;
+        }
+
+        th, td {
+            padding: 0.65rem 0.75rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:nth-child(2n) {
+            background: #f9fafb;
+        }
+
+        tbody tr:hover {
+            background: #eef2ff;
+        }
+
+        td.amount {
+            font-weight: 600;
+            color: #16a34a;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-planned {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-actual {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .table-actions { display: flex; gap: 0.4rem; }
+
+        .btn-small {
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            text-decoration: none;
+        }
+
+        .btn-edit {
+            background: #e0ecff;
+            color: #1d4ed8;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Back link inside card */
+        .back-link {
+            display: inline-block;
+            margin-top: 1.3rem;
+            font-size: 0.9rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+
+    <!-- NAVBAR -->
+    <header class="nav">
+        <div class="nav-left">
+            <div class="logo-badge">🛒</div>
+            <div class="app-name">Family Budgeting Tool</div>
+        </div>
+
+        <div class="nav-actions">
+            {% if username %}
+                <span class="nav-username">Hi, <strong>{{ username }}</strong> 👋</span>
+            {% endif %}
+           
+            
+            <a href="{% url 'add_expense' %}" class="btn btn-secondary-accent">Add expense</a>
+            <a href="{% url 'summary' %}" class="btn btn-outline">View summary</a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger">Sign out</a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+        <section class="card">
+
+            <div class="card-header">
+                <div>
+                    <h1>Income records</h1>
+                    <p>Review, edit, or delete income entries you've added to your family budget.</p>
+                </div>
+
+                <div class="actions-header">
+                    <a href="{% url 'add_income' %}" class="btn-primary-card">+ Add income</a>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                {% if incomes %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Amount</th>
+                                <th>Contributor</th>
+                                <th>Date</th>
+                                <th>Planned?</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for income in incomes %}
+                            <tr>
+                                <td>{{ income.source }}</td>
+                                <td class="amount">${{ income.amount|floatformat:2 }}</td>
+                                <td>{{ income.contributor|default:"—" }}</td>
+                                <td>{{ income.date }}</td>
+                                <td>
+                                    {% if income.planned %}
+                                        <span class="badge badge-planned">Planned</span>
+                                    {% else %}
+                                        <span class="badge badge-actual">Actual</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="{% url 'edit_income' income.id %}" class="btn-small btn-edit">Edit</a>
+                                        <a href="{% url 'delete_income' income.id %}" class="btn-small btn-delete">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                {% else %}
+                    <div class="empty-state">
+                        No income has been added yet. Start by clicking
+                        <strong>“Add income”</strong> to log your first entry.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Back button inside card -->
+            <a href="{% url 'dashboard' %}" class="back-link">← Back to dashboard</a>
+
+        </section>
+    </main>
+
 </div>
+</body>
+</html>

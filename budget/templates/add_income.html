@@ -1,48 +1,376 @@
 {% load static %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Family Budgeting Tool | Add Income</title>
 
-<div class="bg-light min-vh-100">
-    <div class="container mt-5" style="max-width: 600px;">
-        <div class="card p-4 shadow-sm">
-            <h4 class="mb-3">Add Income</h4>
+    <!-- Poppins font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
 
-            <form method="POST">
-                {% csrf_token %}
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-                <!-- Income Source -->
-                <div class="mb-3">
-                    <label class="form-label">Source</label>
-                    <input type="text" name="source" class="form-control" required>
-                </div>
+    <style>
+        :root {
+            --bg: #e5f0ff;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-soft: #e0ecff;
+            --income: #16a34a;
+            --expense: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-subtle: #e5e7eb;
+            --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --radius-lg: 24px;
+            --radius-pill: 999px;
+        }
 
-                <!-- Amount -->
-                <div class="mb-3">
-                    <label class="form-label">Amount ($)</label>
-                    <input type="number" step="0.01" name="amount" class="form-control" required>
-                </div>
+        * {
+            box-sizing: border-box;
+        }
 
-                <!-- Contributor -->
-                <div class="mb-3">
-                    <label class="form-label">Contributor</label>
-                    <input type="text" name="contributor" class="form-control" placeholder="e.g., Dad, Mom, Teen">
-                </div>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #f7fbff 0, var(--bg) 55%, #dbeafe 100%);
+            color: var(--text-main);
+        }
 
-                <!-- Planned Income -->
-                <div class="mb-3 form-check">
-                    <input type="checkbox" name="planned" class="form-check-input">
-                    <label class="form-check-label">Planned Income?</label>
-                </div>
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-                <!-- Date -->
-                <div class="mb-3">
-                    <label class="form-label">Date</label>
-                    <input type="date" name="date" class="form-control">
-                </div>
+        /* ===== NAV – same styles as dashboard ===== */
+        .nav {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.75rem;
+            background: #fafafa;
+            border-bottom: 1px solid #e6e6e6;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        }
 
-                <button class="btn btn-success w-100">Add Income</button>
-            </form>
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
 
-            <a href="{% url 'dashboard' %}" class="btn btn-link mt-3">Back to Dashboard</a>
+        .logo-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #facc15, #fb923c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .app-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-username {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-right: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem 1.1rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.12s ease,
+                background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+        }
+
+        .btn-secondary-accent {
+            background: #4f46e5;
+        }
+
+        .btn-secondary-accent:hover {
+            background: #4338ca;
+        }
+
+        .btn-outline {
+            background: #ffffff;
+            color: var(--text-main);
+            border-color: #e5e7eb;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-soft);
+            border-color: var(--primary);
+        }
+
+        .btn-outline-danger {
+            background: #111827;
+            color: #f9fafb;
+            border-color: #111827;
+        }
+
+        .btn-outline-danger:hover {
+            background: #020617;
+        }
+
+        /* ===== MAIN – center the income card ===== */
+        .main {
+            flex: 1;
+            padding: 2.25rem 1.75rem 2.75rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .form-wrapper {
+            width: 100%;
+            max-width: 640px;
+        }
+
+        .income-card {
+            background: var(--card-bg);
+            border-radius: 32px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+        }
+
+        .income-card-header {
+            padding: 1.4rem 1.8rem;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #f9fafb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .income-card-header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .income-card-header-text h1 {
+            margin: 0 0 0.2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .income-card-header-text p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .income-card-body {
+            padding: 1.8rem 2rem 2rem;
+        }
+
+        .income-card-body p.lead {
+            margin: 0 0 1.2rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .field {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"] {
+            width: 100%;
+            padding: 0.8rem 0.95rem;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.15s ease;
+        }
+
+        input::placeholder {
+            color: #9ca3af;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin: 0.4rem 0 1.1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            border-radius: var(--radius-pill);
+            border: none;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.98rem;
+            cursor: pointer;
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35);
+            transition: 0.15s ease;
+            margin-top: 0.4rem;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.4);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2563eb;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- 🔝 NAV: same as dashboard, but WITHOUT the Add income button -->
+    <header class="nav">
+        <div class="nav-left">
+            <div class="logo-badge">🛒</div>
+            <div class="app-name">Family Budgeting Tool</div>
         </div>
-    </div>
+        <div class="nav-actions">
+            <span class="nav-username">Hi, <strong>{{ username }}</strong> 👋</span>
+
+            <!-- no Add income here -->
+    
+            <a href="{% url 'view_income' %}" class="btn btn-outline">View income</a>
+            <a href="{% url 'add_expense' %}" class="btn btn-primary btn-secondary-accent">Add expense</a>
+            <a href="{% url 'summary' %}" class="btn btn-outline">View summary</a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger">Sign out</a>
+            
+        </div>
+    </header>
+
+    <!-- 🔻 MAIN CARD -->
+    <main class="main">
+        <div class="form-wrapper">
+            <section class="income-card">
+                <div class="income-card-header">
+                    <div class="income-card-header-icon">💵</div>
+                    <div class="income-card-header-text">
+                        <h1>Add income</h1>
+                        <p>Log new money coming into your household.</p>
+                    </div>
+                </div>
+
+                <div class="income-card-body">
+                    <p class="lead">
+                        Add your salary, stipend, side hustle money, or any other income
+                        so your dashboard stays up to date.
+                    </p>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="field">
+                            <label for="source">Source</label>
+                            <input type="text" id="source" name="source"
+                                   placeholder="e.g., Paycheck, Scholarship" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="amount">Amount ($)</label>
+                            <input type="number" id="amount" name="amount"
+                                   step="0.01" placeholder="0.00" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="contributor">Contributor</label>
+                            <input type="text" id="contributor" name="contributor"
+                                   placeholder="e.g., Dad, Mom, Teen">
+                        </div>
+
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="planned" name="planned">
+                            <label for="planned" style="margin: 0; font-weight: 400;">
+                                Planned income (expected but not received yet)
+                            </label>
+                        </div>
+
+                        <div class="field">
+                            <label for="date">Date</label>
+                            <input type="date" id="date" name="date" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit">Add income</button>
+                        <a href="{% url 'dashboard' %}" class="back-link">← Back to dashboard</a>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
 </div>
+</body>
+</html>

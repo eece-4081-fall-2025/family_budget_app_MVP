@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Family Budgeting Tool{% endblock %}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: #eef4ff;
+        }
+
+        /* 🔵 TOP NAVBAR — exactly like the dashboard */
+        .topbar {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #2563eb, #4338ca);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+        }
+
+        .title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            padding: 0.55rem 1.25rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-primary {
+            background: #fff;
+            color: #1e3a8a;
+        }
+
+        .nav-outline {
+            background: transparent;
+            border: 2px solid #ffffff88;
+            color: white;
+        }
+
+        .nav-black {
+            background: #111;
+            color: white;
+        }
+
+        .page-content {
+            padding-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 🔵 GLOBAL TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <img src="{% static 'shopping-cart.png' %}" class="logo">
+            <span class="title">Family Budgeting Tool</span>
+        </div>
+
+        <div class="nav-links">
+            <span style="color: white;">Hi, {{ username }} 👋</span>
+
+            <a href="{% url 'add_income' %}" class="nav-primary">Add income</a>
+            <a href="{% url 'add_expense' %}" class="nav-outline">Add expense</a>
+            <a href="{% url 'view_income' %}" class="nav-outline">View income</a>
+            <a href="{% url 'summary' %}" class="nav-outline">View summary</a>
+            <a href="{% url 'logout' %}" class="nav-black">Sign out</a>
+        </div>
+    </div>
+
+    <div class="page-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+</html>

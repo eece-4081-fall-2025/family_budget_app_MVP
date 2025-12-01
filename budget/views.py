@@ -104,6 +104,7 @@ def add_expense_view(request):
     if request.method == "POST":
         category = request.POST.get("category")
         amount = request.POST.get("amount")
+        date = request.POST.get("date")
 
         # Keep values to refill the form
         category_value = category
@@ -119,10 +120,20 @@ def add_expense_view(request):
                     error_message = "Error: Expense exceeds your available budget!"
                 else:
                     # Add expense to user's JSON data
-                    expense_item = {"category": category, "amount": amount_float}
+                    expense_item = {
+                        "id": len(user_data["expenses"]) + 1,
+                        "category": category,
+                        "amount": amount_float,
+                        "date": date,
+
+                    }
+                    
+
                     user_data["expenses"].append(expense_item)
                     user_data["total_expense"] += amount_float
-                    user_data["balance"] = user_data["total_income"] - user_data["total_expense"]
+                    user_data["balance"] =( 
+                        user_data["total_income"] - user_data["total_expense"]
+                    )
                     save_user_data(username, user_data)
                     return redirect('dashboard')
             except ValueError:
@@ -135,13 +146,7 @@ def add_expense_view(request):
         "amount_value": amount_value,
     }
     return render(request, "add_expense.html", context)
-            user_data = load_user_data(username)
-            expense_item = {"category": category, "amount": float(amount)}
-            user_data["expenses"].append(expense_item)
-            user_data["total_expense"] += float(amount)
-            user_data["balance"] = user_data["total_income"] - user_data["total_expense"]
-            save_user_data(username, user_data)
-            return redirect('dashboard')
+           
 
 
 
@@ -240,3 +245,13 @@ def delete_income(request, income_id):
     save_user_data(username, user_data)
 
     return redirect('view_income')
+
+
+# -------------------------------------------
+# LOGOUT VIEW
+# -------------------------------------------
+def logout_view(request):
+    # Remove username from session
+    request.session.pop('username', None)
+    # Or: request.session.flush() to clear all session data
+    return redirect('login')
