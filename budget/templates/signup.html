@@ -1,0 +1,69 @@
+<form method="POST" action="{% url 'signup' %}">
+    {% csrf_token %}
+
+    {% if success %}
+  <div class="alert alert-success py-2 px-3 mb-3" style="border-radius: 10px;">
+    {{ success }}
+  </div>
+{% endif %}
+  
+    {% if error %}
+      <div class="alert alert-danger py-2 px-3 mb-3" style="border-radius: 10px;">
+        {{ error }}
+      </div>
+    {% endif %}
+  
+    <div class="mb-3 text-start">
+      <label class="form-label fw-medium">
+        Choose a username
+      </label>
+      <input
+        type="text"
+        name="username"
+        value="{{ username|default:'' }}"
+        class="form-control"
+        placeholder="e.g., Paul"
+        required
+      >
+      <small class="helper-text">
+        This is how you’ll sign in.
+      </small>
+    </div>
+  
+    <div class="mb-3 text-start">
+      <label class="form-label fw-medium">
+        Password
+      </label>
+      <input
+        type="password"
+        name="password1"
+        class="form-control"
+        placeholder="Create a password"
+        required
+      >
+    </div>
+  
+    <div class="mb-3 text-start">
+      <label class="form-label fw-medium">
+        Confirm password
+      </label>
+      <input
+        type="password"
+        name="password2"
+        class="form-control"
+        placeholder="Type it again"
+        required
+      >
+    </div>
+  
+    <button type="submit" class="btn btn-primary w-100 py-2 mb-2">
+      Create account
+    </button>
+  
+    <p class="helper-text mt-3 mb-0">
+      Already have an account?
+      <a href="{% url 'login' %}" style="color:#4a6eff; text-decoration:none;">
+        Log in
+      </a>
+    </p>
+  </form>

@@ -1,78 +1,491 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard - Family Budgeting Tool</title>
+    <meta charset="UTF-8" />
+    <title>Family Budgeting Tool | Dashboard</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Poppins font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
+        :root {
+            --bg: #e5f0ff;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-soft: #e0ecff;
+            --income: #16a34a;
+            --expense: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-subtle: #e5e7eb;
+            --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --radius-lg: 24px;
+            --radius-pill: 999px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f8faff;
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top left, #f7fbff 0, var(--bg) 55%, #dbeafe 100%);
+            color: var(--text-main);
         }
-        .navbar {
-            border-bottom: 1px solid #ececec;
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+
+        /* Top nav */
+        .nav {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.75rem;
+        
+            /* ✨ New background instead of flat white */
+            background: #fafafa;
+            border-bottom: 1px solid #e6e6e6;
+
+            /* keep the soft blur + subtle divider line */
+            backdrop-filter: blur(12px);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.8);
+        }
+
+        
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .logo-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #facc15, #fb923c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .app-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-username {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-right: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem 1.1rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.12s ease,
+                background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-secondary-accent {
+            background: #4f46e5;
+        }
+        
+        .btn-secondary-accent:hover {
+            background: #4338ca;
+        }
+        
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+        }
+
+        .btn-outline {
+            background: #ffffff;
+            color: var(--text-main);
+            border-color: #e5e7eb;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-soft);
+            border-color: var(--primary);
+        }
+
+        .btn-outline-danger {
+            background: #111827;
+            color: #f9fafb;
+            border-color: #111827;
+        }
+
+        .btn-outline-danger:hover {
+            background: #020617;
+        }
+
+        /* Main layout */
+        .main {
+            flex: 1;
+            padding: 2.25rem 1.75rem 2.75rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        /* New wrapper so we can stack the grid + a bottom card */
+        .main-inner {
+            width: 100%;
+            max-width: 1120px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .content-grid {
+            width: 100%;
+            max-width: 1120px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
+            gap: 1.8rem;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr 0.9fr;
+            }
+            
+            .nav {
+                flex-wrap: wrap;
+                height: auto;
+                padding-block: 0.75rem;
+            }
+            .nav-actions {
+                margin-top: 0.4rem;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 1rem 1.25rem;
+        }
+
+        .card-header-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: #e5f4ff;
+            font-size: 0.72rem;
+            color: #0369a1;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .hero-title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            margin: 0.7rem 0 0.25rem;
+        }
+
+        .hero-title span {
+            color: var(--primary);
+        }
+
+        .hero-sub {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .hero-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.9rem 0 0;
+        }
+
+        .hero-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 0.45rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .hero-list-emoji {
+            font-size: 1.05rem;
+        }
+
+        .hero-footer {
+            margin-top: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            align-items: center;
+        }
+
+        .chip {
+            padding: 0.2rem 0.7rem;
+            border-radius: 999px;
+            background: #f1f5f9;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-main {
+            padding: 1.25rem 1.4rem;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #f9fafb;
+        }
+
+        .stat-main-label {
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .stat-main-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.4rem 0 0.15rem;
+        }
+
+        .stat-main-sub {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+
         .stat-card {
-            background: white;
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 5px 18px rgba(0,0,0,0.08);
-            transition: 0.2s ease;
+            border-radius: 18px;
+            padding: 0.95rem 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(255, 255, 255, 0.96);
         }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.10);
+
+        .stat-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-value {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .stat-value.income {
+            color: var(--income);
+        }
+
+        .stat-value.expense {
+            color: var(--expense);
+        }
+
+        .hint {
+            margin-top: 0.8rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .hint span {
+            font-weight: 500;
+            color: var(--primary);
         }
     </style>
 </head>
-
 <body>
+<div class="page">
+    <!-- Top navigation -->
+    <header class="nav">
+        <div class="nav-left">
+            <div class="logo-badge">
+                🛒
+            </div>
+            <div class="app-name">Family Budgeting Tool</div>
+        </div>
+        <div class="nav-actions">
+            <span class="nav-username">Hi, <strong>{{ username }}</strong> 👋</span>
 
-<!-- ====================== NAVBAR ====================== -->
-<nav class="navbar navbar-light bg-white shadow-sm px-4 py-3">
-    <span class="navbar-brand fw-semibold">Welcome, {{ username }} 👋</span>
+            <a href="{% url 'add_income' %}" class="btn btn-primary">
+                Add income
+            </a>
+            <a href="{% url 'view_income' %}" class="btn btn-outline">
+                View income
+            </a>
+            <a href="{% url 'add_expense' %}" class="btn btn-primary btn-secondary-accent">
+                Add expense
+            </a>
+            <a href="{% url 'summary' %}" class="btn btn-outline">
+                View summary
+            </a>
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger">
+                Sign out
+            </a>
+        </div>
+    </header>
 
-    <div class="d-flex align-items-center gap-2">
-        <a href="{% url 'add_income' %}" class="btn btn-outline-success btn-sm">Add Income</a>
-        <a href="{% url 'view_income' %}" class="btn btn-outline-secondary btn-sm">View Income</a>
-        <a href="{% url 'add_expense' %}" class="btn btn-outline-danger btn-sm">Add Expense</a>
-        <a href="{% url 'summary' %}" class="btn btn-outline-primary btn-sm">View Summary</a>
+    <!-- Main content -->
+    <main class="main">
+        <div class="main-inner">
+            <div class="content-grid">
+            <!-- Left: welcome / explainer -->
+            <section class="card">
+                <div class="card-header-pill">
+                    <span>Built for real families — not spreadsheets</span>
+                </div>
 
-        <!-- 🔥 SIGN OUT BUTTON (right here!) -->
-        <a href="{% url 'logout' %}" class="btn btn-dark btn-sm">Sign Out</a>
-    </div>
-</nav>
+                <h1 class="hero-title">
+                    Welcome back, <span>{{ username }}</span>.
+                </h1>
+                <p class="hero-sub">
+                    Here’s a quick snapshot of your month so far. Keep everyone on the same page with one shared budget.
+                </p>
 
+                <ul class="hero-list">
+                    <li>
+                        <span class="hero-list-emoji">📊</span>
+                        <span>Automatic totals for income, expenses, and balance.</span>
+                    </li>
+                    <li>
+                        <span class="hero-list-emoji">👨‍👩‍👧‍👦</span>
+                        <span>Track everyone’s contributions in one shared space.</span>
+                    </li>
+                    <li>
+                        <span class="hero-list-emoji">🧾</span>
+                        <span>Log new income or expenses in just a few clicks.</span>
+                    </li>
+                </ul>
 
-<!-- ====================== MAIN CONTENT ====================== -->
-<div class="container mt-4">
+                <div class="hero-footer">
+                    <a href="{% url 'add_expense' %}" class="btn btn-primary">
+                        + Record a new expense
+                    </a>
+                    <div class="chip">
+                        Tip: Start with your fixed bills, then add flexible spending.
+                    </div>
+                </div>
+            </section>
 
-    <!-- Overview Card -->
-    <div class="stat-card mb-4">
-        <h4 class="fw-bold mb-2">Monthly Overview</h4>
-        <hr>
+            <!-- Right: stats -->
+            <section class="stats-grid">
+                <div class="stat-main">
+                    <div class="stat-main-label">Current Balance</div>
+                    <div class="stat-main-value">
+                        ${{ balance|floatformat:2 }}
+                    </div>
+                    {% if balance >= 0 %}
+                        <p class="stat-main-sub">
+                            You’re currently within your budget. Nice work keeping things on track. 🎉
+                        </p>
+                    {% else %}
+                        <p class="stat-main-sub">
+                            You’re over budget this month. Consider trimming expenses or adding income. 💡
+                        </p>
+                    {% endif %}
+                </div>
 
-        <p><strong>Total Income:</strong> ${{ total_income }}</p>
-        <p><strong>Total Expenses:</strong> ${{ total_expense }}</p>
-        <hr>
+                <div class="stat-row">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Income</div>
+                        <div class="stat-value income">
+                            ${{ total_income|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Expenses</div>
+                        <div class="stat-value expense">
+                            ${{ total_expense|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
 
-        <h5 class="fw-semibold">
-            Remaining Balance:
-            <span class="{% if balance < 0 %}text-danger{% else %}text-success{% endif %}">
-                ${{ balance }}
-            </span>
-        </h5>
-    </div>
+                <p class="hint">
+                    Want more detail? Head to the <span>summary</span> page to see every income and expense entry.
+                </p>
+            </section>
 
+            <section class="card">
+                <h2 style="font-size: 1rem; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b;">
+                    Make the most of your budget
+                </h2>
+                <p style="margin: 0 0 0.75rem; font-size: 0.9rem; color: #6b7280;">
+                    Here are a few quick steps to keep this dashboard useful throughout the month:
+                </p>
+                <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.9rem; color: #4b5563;">
+                    <li style="margin-bottom: 0.35rem;">
+                        <strong>Add your regular income</strong> (paychecks, stipends, side jobs) on the
+                        <a href="{% url 'add_income' %}" style="color: #2563eb; text-decoration: none;">Add income</a> page.
+                    </li>
+                    <li style="margin-bottom: 0.35rem;">
+                        <strong>Log everyday spending</strong> like groceries, transport, and subscriptions on the
+                        <a href="{% url 'add_expense' %}" style="color: #2563eb; text-decoration: none;">Add expense</a> screen.
+                    </li>
+                    <li style="margin-bottom: 0.35rem;">
+                        <strong>Check the summary weekly</strong> to spot patterns and adjust before the month ends.
+                    </li>
+                </ul>
+            </section>
+        </div>
+    </main>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

@@ -20,6 +20,9 @@ urlpatterns = [
     # Summary page
     path('summary/', views.summary_view, name='summary'),
 
+    path('logout/', views.logout_view, name='logout'),
+
+
     # ---------------------------------------------------------
     # Epic 5 — Reporting Endpoints (added safely, no conflicts)
     # ---------------------------------------------------------
